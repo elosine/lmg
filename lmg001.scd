@@ -27,8 +27,8 @@ SynthDef(\shortAttacks_st, {
 	var in1, in2, gr1, gr2, stsig, g1trig, g2trig;
 	in1 = In.ar(ibs1, 2);
 	in2 = In.ar(ibs2, 2);
-	g1trig = SinOsc.kr(0,rate);
-	g2trig = (SinOsc.kr(rate)*2)-1.5;
+	g1trig = Impulse.kr(rate);
+	g2trig = Impulse.kr(rate, 0.5);
 	gr1 = GrainIn.ar(2, g1trig, dur1, in1, pan1, gr1envbuf);
 	gr2 = GrainIn.ar(2, g2trig, dur2, in2, pan2, gr2envbuf);
 	Out.ar( obs, (gr1+gr2)*amp);
@@ -37,8 +37,8 @@ SynthDef(\shortAttacks_st, {
 
 ~g1 = Group.new;
 ~g2 = Group.after(~g1);
-{Out.ar(50, WhiteNoise.ar());Out.ar(51, SinOsc.ar())}.play(~g1)
+{Out.ar(50, WhiteNoise.ar());Out.ar(52, SinOsc.ar())}.play(~g1)
 s.queryAllNodes
 
-a = Synth(\shortAttacks_st, [\ibs1, 50, \ibs2,51], ~g2);
-a.set(\trate1, 0.5, \trate2, 0.5)
+a = Synth(\shortAttacks_st, [\ibs1, 50, \ibs2,52], ~g2);
+a.set(\rate, 2)
