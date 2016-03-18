@@ -22,17 +22,18 @@ SynthDef(\shortAttacks, {
 
 
 ////SAMPLE TRILL
-SynthDef(\shortAttacks_st, {
+SynthDef(\sampTrill, {
 	arg obs, ibs1, ibs2, dur1=0.25, dur2=0.25, pan1=0, pan2=0, gr1envbuf= -1, gr2envbuf= -1, rate=0.5, amp=0.85;
-	var in1, in2, gr1, gr2, stsig, g1trig, g2trig;
+	var in1, in2, gr1, gr2, stsig, g1trig, g2trig, clk, sig;
+	clk = Phasor.ar(0, (1.0/(44100.0*rate)) );
 	in1 = In.ar(ibs1, 2);
 	in2 = In.ar(ibs2, 2);
-	g1trig = Impulse.kr(rate);
-	g2trig = Impulse.kr(rate, 0.5);
+	g1trig = clk>0.25;
+	g2trig = clk>0.75;
 	gr1 = GrainIn.ar(2, g1trig, dur1, in1, pan1, gr1envbuf);
 	gr2 = GrainIn.ar(2, g2trig, dur2, in2, pan2, gr2envbuf);
-	Out.ar( obs, (gr1+gr2)*amp);
-
+	sig = Mix.ar([gr1, gr2]);
+	Out.ar( obs, sig*amp);
 }).add;
 
 ~g1 = Group.new;
@@ -40,5 +41,5 @@ SynthDef(\shortAttacks_st, {
 {Out.ar(50, WhiteNoise.ar());Out.ar(52, SinOsc.ar())}.play(~g1)
 s.queryAllNodes
 
-a = Synth(\shortAttacks_st, [\ibs1, 50, \ibs2,52], ~g2);
-a.set(\rate, 2)
+a = Synth(\sampTrill, [\ibs1, 50, \ibs2,52], ~g2);
+a.set(\rate, 0.1, \dur1, 0.08, \dur2, 0.08)
