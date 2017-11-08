@@ -126,7 +126,7 @@ s.waitForBoot{
 			}, [0.069]
 		).add;
 		0.35.wait;
-		s.sendMsg(\s_new,\petalsOfResonance, 3000, 0, 1, \ibs, 10, \inamp, 1.0, \fund, 60, \firstPartial, 1, \bank2MidiOffset, 0.37, \spread, 1.33, \pAmp, -20.dbamp, \amp, 0.5);
+		s.sendMsg(\s_new,\petalsOfResonance, 3000, 0, 1, \ibs, 2, \inamp, 1.0, \fund, 60, \firstPartial, 1, \bank2MidiOffset, 0.37, \spread, 1.33, \pAmp, -20.dbamp, \amp, 0.5);
 	}
 }
 )
@@ -137,7 +137,7 @@ s.sendMsg(\n_set, 3000,\ibs, 10, \inamp, 0.3, \fund, 50, \firstPartial, 2, \bank
 amp=1.0, inamp=1.0, ibs=0, obs=0, pobs, fund=80, firstPartial=1, bank2MidiOffset=0.37, spread=1.33, ringL1=7.75, ringL2=15.5, inputLen=0.5, trig=1, gate=1, tunerate=0.07, itrate=10.5, rel=7;
 	s.options.firstPrivateBus
 
-{SoundIn.ar(2)}.play
+{SoundIn.ar(0)}.play
 
 s.sendMsg(\n_set, 3000,\trig, 0);
 s.sendMsg(\n_set, 3000,\trig, 1);
