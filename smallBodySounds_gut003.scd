@@ -1,28 +1,27 @@
 s.options.sampleRate = 48000;
-
+s.options.memSize_(65536 * 10);
 (
 b = Buffer.read(s, "/Users/yangj14/Music/SuperCollider Recordings/SC_171224_231400.aiff");
 
 SynthDef(\gut, {
-	arg buf, amp=13, out=0, hpf=750, bpq=0.0001, sat=0.95, lpf=3000, bpf=1000, ffreq=350, chgrate=0.1, tfreq=7, ramp=0.3,  trackFall=0.2, slowLag=0.2, fastLag= 0.01, fastMul= 0.9, thresh= 0.05, minDur= 0.1, dt=1, atk=0.03, rel=0.1, crv= -6, othresh = 0.3;
-	var dsig, freq, rsig, drsig, onset, fft;
+	arg buf, amp=13, out=0, hpf=750, lpf=3000, dt=1.5;
+	var onset;
 	var sig = PlayBuf.ar(1, buf, loop:1);
-
 	sig = RHPF.ar(sig, hpf);
 	sig = RLPF.ar(sig, lpf);
-	freq = TRand.kr(700, 1000, Dust.kr( chgrate ) ).poll;
-	// sig = Formlet.ar(sig*0.4, freq, 0.001, 0.02);
-
-	onset = Coyote.kr(sig, trackFall, slowLag, fastLag, fastMul, thresh, minDur);
-
+	onset = Coyote.kr(sig, fastMul:0.9);
 	sig = sig*Decay.ar( sig*K2A.ar(onset), dt);
+	Out.ar(out, sig*amp);
+}).add;
 
-	// rsig = JPverb.ar(sig, SinOsc.kr(0.03).range(0.0, 3) );
-
-	dsig = DelayC.ar(sig, 0.03, 0.03);
-
-	// Out.ar(out, ( [sig, dsig] + (rsig*ramp) ) * amp);
-	Out.ar(out, [sig, dsig]  * amp);
+SynthDef(\formletVerb, {
+	arg ibs, pchgrate=0.07, out, amp=1, decay=0.02;
+	var in, freq, sig;
+	in = In.ar(ibs);
+	freq = TRand.kr(700, 1000, Dust.kr( pchgrate ) );
+	sig = Formlet.ar(in, freq, 0.001, decay);
+	sig = JPverb.ar( sig, SinOsc.kr(0.03).range(0.0, 3) );
+	Out.ar(out, sig* amp);
 }).add;
 
 SynthDef(\toypiano, {
@@ -81,10 +80,15 @@ p = ProxySpace.push(s);
 ~out.ar(2);
 ~out.play;
 ~imps = \gut;
-~imps.set(\buf, b, \amp, 7);
+~imps.set(\buf, b, \amp, 3);
+ibs, pchgrate=0.07, out, amp=1, decay=0.02;
+~fv = \formletVerb;
+~fv.set(\pchgrate, \amp, \decay);
 ~tp = \toypiano
 ~tp.set(\in, ~imps.bus.index);
 
 ~out = ~tp
-
+~out = ~imps
+~out = ~imps
+s.meter
 
