@@ -2,6 +2,8 @@
 (
 s.options.sampleRate = 48000;
 s.options.memSize = (8192*30);
+
+s.options.numOutputBusChannels = 8;
 s.waitForBoot{
 	fork{
 		var syn, insyn, keycmd;
@@ -12,7 +14,7 @@ s.waitForBoot{
 		~g2 = Group.after(~g1);
 		0.1.wait;
 
-		SynthDef(\livein, {
+		SynthDef(\liveinfilt, {
 			arg in=0, amp=1, out=0, hpf=750, lpf=3000;
 			var dsig;
 			var sig = SoundIn.ar(in);
@@ -22,11 +24,17 @@ s.waitForBoot{
 			Out.ar(out, [sig, dsig]*amp);
 		}).add;
 
+		SynthDef(\livein, {
+			arg in=0, amp=1, out=0;
+			var sig = SoundIn.ar(in);
+			Out.ar(out, sig*amp);
+		}).add;
+
 		SynthDef(\rot8, {
 			arg in, out, amp, chgrate=(1/30), spdlo=0.1, spdhi=1, gate = 1;
 			var input = In.ar(in);
 			var env = EnvGen.ar( Env.asr(5, 1, 7), gate, doneAction:2);
-			Out.ar(out, PanAz.ar(8, input, SinOsc.kr( LFTri.kr(chgrate).range(spdlo, spdhi) ) ) *env);
+			Out.ar(out, PanAz.ar(4, input, SinOsc.kr( LFTri.kr(chgrate).range(spdlo, spdhi) ) ) *env);
 		}).add;
 
 		SynthDef(\formletVerb, {
@@ -215,8 +223,8 @@ s.waitForBoot{
 			ltdOutput1 = Limiter.ar( outArrayA1, 0.98, 0.01 );
 			ltdOutput2 = Limiter.ar( outArrayA2, 0.98, 0.01 );
 			outenv = EnvGen.ar(Env.asr(0.01, 1, rel), gate, doneAction:2);
-			Out.ar(pobs, [ltdOutput1,ltdOutput2]*amp*outenv); //out to private (stereo)bus
-			Out.ar(obs, [ltdOutput1, ltdOutput2, ltdOutput2, ltdOutput2, ltdOutput2, ltdOutput1, ltdOutput1, ltdOutput1]*amp*outenv); //8 channels
+			//Out.ar(pobs, [ltdOutput1,ltdOutput2]*amp*outenv); //out to private (stereo)bus
+			Out.ar(obs, [ltdOutput1, ltdOutput2, ltdOutput2, ltdOutput1, ltdOutput2, ltdOutput1, ltdOutput1, ltdOutput1]*amp*outenv); //8 channels
 		}, [0.069]
 		).add;
 
@@ -242,15 +250,15 @@ s.waitForBoot{
 			if( args[3].asInteger == 32, {
 				fork{
 
-					//start petals
+									//start petals
 					"START THROAT".postln;
 
-					s.sendMsg(\s_new,\petalsOfResonance, 3200, 0, ~g1.nodeID, \ibs, 30, \inamp, 1.0, \fund, 60, \firstPartial, 1, \bank2MidiOffset, 0.37, \spread, 1.33, \pAmp, -20.dbamp, \amp, 0.2);
+					s.sendMsg(\s_new,\petalsOfResonance, 3200, 0, ~g1.nodeID, \ibs, 30, \inamp, 1.0, \fund, 60, \firstPartial, 1, \bank2MidiOffset, 0.37, \spread, 1.33, \pAmp, -20.dbamp, \amp, 0.4);
 					0.1.wait;
 					s.sendMsg(\s_new, \livein, 3202, 0, ~g0.nodeID, \in, 0, \amp, 1, \out, 30);
 
-					// (60*5.5).wait;
-					(60*0.1).wait;
+					(60*4.5).wait;
+					// (60*1.1).wait;
 					"STOP THROAT".postln;
 
 					s.sendMsg(\n_set, 3200,\trig, 0); //end throat
@@ -260,32 +268,32 @@ s.waitForBoot{
 
 					//heart
 					"START HEART".postln;
-					s.sendMsg(\s_new, \heart, 3209, 0, ~g0.nodeID, \amp, 0.05);
+					s.sendMsg(\s_new, \heart, 3209, 0, ~g0.nodeID, \amp, 0.0075);
 
-					// (60*3.5).wait;
+					(60*2.5).wait;
 
-					(60*0.2).wait;
+					// (60*1.2).wait;
 					"STOP HEART".postln;
 
 					s.sendMsg(\n_set, 3209, \gate, 0); //cut heart
 
-					10.wait;
+					20.wait;
 
 					//gut
 					"START GUT".postln;
-					s.sendMsg(\s_new, \livein, 3105, 0, ~g0.nodeID, \in, 0, \amp, 8, \out, 55);
+					s.sendMsg(\s_new, \liveinfilt, 3105, 0, ~g0.nodeID, \in, 0, \amp, 8, \out, 55);
 					s.sendMsg(\s_new, \formletVerb, 3107, 0, ~g1.nodeID, \in, 55, \amp, 0.3, \decay, 1, \out, 57);
 					s.sendMsg(\s_new, \toypiano, 3109, 0, ~g1.nodeID, \in, 55, \thresh, 0.1, \amp, 0.5, \minDur, 2, \out, 59 );
 					s.sendMsg(\s_new, \dist, 3111, 0, ~g1.nodeID, \in, 59, \type, 1, \amp, 0.25, \out, 61 );
 					s.sendMsg(\s_new, \dist, 3113, 0, ~g1.nodeID, \in, 57, \type, 2, \amp, 0.3, \out, 63 );
 
-					s.sendMsg(\s_new, \rot8, 3115, 0, ~g2.nodeID, \in, 57, \out, 0, \amp, 0.8, \chgrate, (1/30), \spdlo, 0.1, \spdhi, 1 );
-					s.sendMsg(\s_new, \rot8, 3117, 0, ~g2.nodeID, \in, 59, \out, 0, \amp, 0.8, \chgrate, (1/42), \spdlo, 0.08, \spdhi, 0.7 );
-					s.sendMsg(\s_new, \rot8, 3119, 0, ~g2.nodeID, \in, 61, \out, 0, \amp, 0.8, \chgrate, (1/26), \spdlo, 0.05, \spdhi, 2.2 );
-					s.sendMsg(\s_new, \rot8, 3121, 0, ~g2.nodeID, \in, 63, \out, 0, \amp, 0.8, \chgrate, (1/55), \spdlo, 0.21, \spdhi, 0.92 );
+					s.sendMsg(\s_new, \rot8, 3115, 0, ~g2.nodeID, \in, 57, \out, 0, \amp, 0.25, \chgrate, (1/30), \spdlo, 0.1, \spdhi, 1 );
+					s.sendMsg(\s_new, \rot8, 3117, 0, ~g2.nodeID, \in, 59, \out, 0, \amp, 0.25, \chgrate, (1/42), \spdlo, 0.08, \spdhi, 0.7 );
+					s.sendMsg(\s_new, \rot8, 3119, 0, ~g2.nodeID, \in, 61, \out, 0, \amp, 0.25, \chgrate, (1/26), \spdlo, 0.05, \spdhi, 2.2 );
+					s.sendMsg(\s_new, \rot8, 3121, 0, ~g2.nodeID, \in, 63, \out, 0, \amp, 0.25, \chgrate, (1/55), \spdlo, 0.21, \spdhi, 0.92 );
 
-					// (60*4).wait;
-					(60*0.2).wait;
+					(60*2.2).wait;
+					// (60*1.2).wait;
 					"STOP GUT".postln;
 
 					s.sendMsg(\n_set, 3115, \gate, 0);
@@ -297,8 +305,6 @@ s.waitForBoot{
 			);
 		});
 }}
+
 )
-
-
-
 
